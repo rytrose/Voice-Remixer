@@ -4,7 +4,7 @@ var remoteVideo;
 var peerConnections = {};
 var uuid;
 var serverConnection;
-var numVideos = 0;
+var numPeers = 0;
 var streamsGotten = 0;
 var mixer = new Mixer();
 
@@ -84,7 +84,8 @@ function gotMessageFromServer(message) {
       // Only create answers in response to offers
       if(signal.sdp.type == 'offer') {
         
-        peerConnection.createAnswer().then(
+        if(numPeers < MAX_CONNECTIONS) {
+          peerConnection.createAnswer().then(
           function (description) {
             console.log('got description');
 
@@ -92,6 +93,7 @@ function gotMessageFromServer(message) {
               serverConnection.send(JSON.stringify({'sdp': peerConnection.localDescription, 'uuid': uuid}));
             }).catch(errorHandler);
           }).catch(errorHandler);
+        } else { alert("Only " + MAX_CONNECTIONS + " connections are allowed.")}
       }
     }).catch(errorHandler);
   } else if(signal.ice) {
@@ -106,27 +108,49 @@ function gotIceCandidate(event) {
   }
 }
 
-
+var remoteStream;
 
 function gotRemoteStream(event) {
   console.log('got remote stream');
-  var video_div = document.getElementById('remoteVideos');
-  if(streamsGotten == 0) {
+  
+  // First track event
+  if(!remoteStream) {
+    remoteStream = new MediaStream([event.track]);
+    if(event.track.kind == "audio") mixer.addStream(event.streams[0]);
+  }
+  // Second track event
+  else {
+    remoteStream.addTrack(event.track);
+    if(event.track.kind == "audio") mixer.addStream(event.streams[0]); 
+    var video_div = document.getElementById('remoteVideos');
     var new_video = document.createElement('video');
-    var new_video_id = "remoteVideo" + numVideos;
+    var new_video_id = "remoteVideo" + numPeers;
     new_video.id = new_video_id;
     new_video.autoplay = true;
     new_video.style.width = "40%";
-    new_video.srcObject = event.streams[0];  
+    new_video.srcObject = remoteStream;
+    remoteStream = null;  
     video_div.append(new_video);
-    streamsGotten++;
-  } else {
-    var str = 'remoteVideo' + numVideos;
-    var new_video = document.getElementById(str);
-    new_video.srcObject = event.streams[0];
-    streamsGotten = 0; 
-    numVideos++;
+    numPeers++;
   }
+
+  // var video_div = document.getElementById('remoteVideos');
+  // if(streamsGotten == 0) {
+  //   var new_video = document.createElement('video');
+  //   var new_video_id = "remoteVideo" + numPeers;
+  //   new_video.id = new_video_id;
+  //   new_video.autoplay = true;
+  //   new_video.style.width = "40%";
+  //   new_video.srcObject = event.streams[0];  
+  //   video_div.append(new_video);
+  //   streamsGotten++;
+  // } else {
+  //   var str = 'remoteVideo' + numPeers;
+  //   var new_video = document.getElementById(str);
+  //   new_video.srcObject = event.streams[0];
+  //   streamsGotten = 0; 
+  //   numPeers++;
+  // }
 }
 
 function errorHandler(error) {

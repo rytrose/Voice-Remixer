@@ -7,6 +7,9 @@ var HEIGHT = 231;
 var SMOOTHING = 0.8;
 var FFT_SIZE = 2048;
 
+const MAX_CONNECTIONS = 2;
+var currentConnections = 0;
+
 function Mixer() {
   // cope with browser differences
   if (typeof AudioContext === 'function') {
@@ -17,7 +20,10 @@ function Mixer() {
     alert('Sorry! Web Audio is not supported by this browser');
   }
 
+
+  this.merger = this.context.createChannelMerger(2 * (MAX_CONNECTIONS + 1));
   this.output = this.context.createMediaStreamDestination();
+  this.merger.connect(this.output);
 }
 
 Mixer.prototype.addStream = function(stream) {
@@ -28,7 +34,8 @@ Mixer.prototype.addStream = function(stream) {
   console.log('Connecting source to output.');
   this.gainNode = this.context.createGain();
   this.source.connect(this.gainNode);
-  this.gainNode.connect(this.output);
+  this.gainNode.connect(this.merger, 0, currentConnections);
+  currentConnections++;
 }
 
 Mixer.prototype.getOutputStream = function() {
