@@ -14,12 +14,16 @@ var peerConnectionConfig = {
 
 function pageReady() {
   uuid = createUUID();
+  document.getElementById('masterId').innerHTML = uuid;
 
   localVideo = document.getElementById('localVideo');
   remoteVideo = document.getElementById('remoteVideo');
 
   serverConnection = new WebSocket('wss://' + window.location.hostname + ':8443');
   serverConnection.onmessage = gotMessageFromServer;
+
+  // Tell server what UUID this client is
+  serverConnection.onopen = () => serverConnection.send(JSON.stringify({'identify': true, 'uuid': uuid}));
 
   var constraints = {
     video: true,
@@ -99,3 +103,4 @@ function createUUID() {
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
   )
 }
+

@@ -46,16 +46,66 @@ app.get('/master', function (req, res) {
   res.sendFile(path.join(__dirname, 'client', 'master.html'));
 });
 
+app.get('/slave', function (req, res) {
+  res.sendFile(path.join(__dirname, 'client', 'slave.html'));
+});
+
 // ----------------------------------------------------------------------------------------
 
-const wss = new WebSocketServer({server: httpsServer});
+const wss = new WebSocketServer({server: httpsServer, clientTracking: true});
 var networks = {};
 
 wss.on('connection', function(ws) {
+  
+  ws.on('error', (e) => { if(e.code != 'ECONNRESET') console.log(e); });
+
+  ws.uuid = -99;
   ws.on('message', function(message) {
-    // Broadcast any received message to all clients
-    console.log('received: %s', message);
-    wss.broadcast(message);
+    var signal = JSON.parse(message);
+    if(signal.identify) { ws.uuid = signal.uuid; return; }
+
+    console.log("MESSAGE: " + signal);
+    console.log("Master in message: " + signal.master);
+
+    // this message is from a slave
+    if(signal.master){
+      // if this is not the first message to the master
+      if(signal.master in networks) {
+        console.log("NOT the first message from slave.");
+        var slaves = networks[signal.master];
+        // if this is a new slave
+        if(slaves.indexOf(signal.uuid) == -1) networks[signal.master].push(signal.uuid);
+      } 
+      // this is the first message from the slave, establish master<-->slave link
+      else {
+        console.log("First message from slave.");
+        networks[signal.master] = [signal.uuid];
+      }
+
+      console.log(networks);
+
+      // forward the message to the master
+      var client_array = Array.from(wss.clients);
+      console.log("Clients: " + client_array);
+      client_array.forEach(cl => console.log(cl.uuid));
+
+      var master = Array.from(wss.clients).filter(client => client.uuid == signal.master)[0];
+      console.log("Master: " + master);
+      if(master && master.readyState === WebSocket.OPEN) master.send(message);
+      else console.log("Master not found!");
+    }
+    // this message is from a master
+    else {
+      // forward the message to all slaves
+      console.log("Master uuid: " + signal.uuid);
+      console.log("networks: " + networks);
+      networks[signal.uuid].forEach(function each(slave) {
+        var slave_ws = Array.from(wss.clients).filter(client => client.uuid == slave)[0];
+        console.log(slave_ws);
+        if(slave_ws && slave_ws.readyState === WebSocket.OPEN) slave_ws.send(message);
+        else console.log("Slave not found!");
+      });
+    }
   });
 });
 
