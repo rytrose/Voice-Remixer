@@ -6,6 +6,7 @@ var uuid;
 var serverConnection;
 var numVideos = 0;
 var streamsGotten = 0;
+var mixer = new Mixer();
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -17,6 +18,12 @@ var peerConnectionConfig = {
 function pageReady() {
   uuid = createUUID();
   document.getElementById('masterId').innerHTML = uuid;
+
+  var mute = document.getElementById('mute');
+  mute.onchange = function() {
+    if(mute.checked) mixer.gainNode.gain.setValueAtTime(0, mixer.context.currentTime);
+    else mixer.gainNode.gain.setValueAtTime(1, mixer.context.currentTime);
+  };
 
   localVideo = document.getElementById('localVideo');
 
@@ -40,7 +47,20 @@ function pageReady() {
 
 function getUserMediaSuccess(stream) {
   localStream = stream;
-  localVideo.srcObject = stream;
+  
+  // Add local stream to mixer
+  mixer.addStream(localStream);
+
+  // Get the mixed audio stream from mixer
+  var streamFromMixer = mixer.getOutputStream();
+
+  // Remove the original audio track from local stream
+  localStream.removeTrack(localStream.getAudioTracks()[0]);
+
+  // Add the mixer audio track to local stream
+  localStream.addTrack(streamFromMixer.getAudioTracks()[0]);
+
+  localVideo.srcObject = localStream;
 }
 
 function start(signal) {
@@ -85,6 +105,8 @@ function gotIceCandidate(event) {
     serverConnection.send(JSON.stringify({'ice': event.candidate, 'uuid': uuid}));
   }
 }
+
+
 
 function gotRemoteStream(event) {
   console.log('got remote stream');
