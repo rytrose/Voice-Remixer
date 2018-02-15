@@ -17,7 +17,7 @@ const serverConfig = {
 
 var app = express();
 var path = require('path');
-var httpsServer = https.createServer(serverConfig, app).listen(HTTPS_PORT, '0.0.0.0');
+var httpsServer = https.createServer(serverConfig, app).listen(HTTPS_PORT, "0.0.0.0");
 
 var redis = require("redis");
 var redis_client = redis.createClient();

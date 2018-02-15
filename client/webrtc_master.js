@@ -1,9 +1,11 @@
 var localVideo;
 var localStream;
 var remoteVideo;
-var peerConnection;
+var peerConnections = {};
 var uuid;
 var serverConnection;
+var numVideos = 0;
+var streamsGotten = 0;
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -17,7 +19,6 @@ function pageReady() {
   document.getElementById('masterId').innerHTML = uuid;
 
   localVideo = document.getElementById('localVideo');
-  remoteVideo = document.getElementById('remoteVideo');
 
   serverConnection = new WebSocket('wss://' + window.location.hostname + ':8443');
   serverConnection.onmessage = gotMessageFromServer;
@@ -42,33 +43,39 @@ function getUserMediaSuccess(stream) {
   localVideo.srcObject = stream;
 }
 
-function start(isCaller) {
-  peerConnection = new RTCPeerConnection(peerConnectionConfig);
+function start(signal) {
+  var peerConnection = new RTCPeerConnection(peerConnectionConfig);
   peerConnection.onicecandidate = gotIceCandidate;
   peerConnection.ontrack = gotRemoteStream;
   peerConnection.addStream(localStream);
-
-  if(isCaller) {
-    peerConnection.createOffer().then(createdDescription).catch(errorHandler);
-  }
+  peerConnections[signal.uuid] = peerConnection;
 }
 
 function gotMessageFromServer(message) {
-  if(!peerConnection) start(false);
-
   var signal = JSON.parse(message.data);
 
   // Ignore messages from ourself
   if(signal.uuid == uuid) return;
-
+ 
   if(signal.sdp) {
+    start(signal);
+    var peerConnection = peerConnections[signal.uuid];
     peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(function() {
       // Only create answers in response to offers
       if(signal.sdp.type == 'offer') {
-        peerConnection.createAnswer().then(createdDescription).catch(errorHandler);
+        
+        peerConnection.createAnswer().then(
+          function (description) {
+            console.log('got description');
+
+            peerConnection.setLocalDescription(description).then(function() {
+              serverConnection.send(JSON.stringify({'sdp': peerConnection.localDescription, 'uuid': uuid}));
+            }).catch(errorHandler);
+          }).catch(errorHandler);
       }
     }).catch(errorHandler);
   } else if(signal.ice) {
+    var peerConnection = peerConnections[signal.uuid];
     peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice)).catch(errorHandler);
   }
 }
@@ -79,17 +86,23 @@ function gotIceCandidate(event) {
   }
 }
 
-function createdDescription(description) {
-  console.log('got description');
-
-  peerConnection.setLocalDescription(description).then(function() {
-    serverConnection.send(JSON.stringify({'sdp': peerConnection.localDescription, 'uuid': uuid}));
-  }).catch(errorHandler);
-}
-
 function gotRemoteStream(event) {
   console.log('got remote stream');
-  remoteVideo.srcObject = event.streams[0];
+  var video_div = document.getElementById('remoteVideos');
+  if(streamsGotten == 0) {
+    var str = '<video id="remoteVideo' + numVideos + '" autoplay style="width:40%;"></video>';
+    console.log(str);
+    video_div.innerHTML += str;
+    var new_video = document.getElementById('remoteVideo' + numVideos);
+    new_video.srcObject = event.streams[0];  
+    streamsGotten++;
+  } else {
+    var str = 'remoteVideo' + numVideos;
+    var new_video = document.getElementById(str);
+    new_video.srcObject = event.streams[0];
+    streamsGotten = 0; 
+    numVideos++;
+  }
 }
 
 function errorHandler(error) {
