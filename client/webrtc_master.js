@@ -90,11 +90,13 @@ function gotRemoteStream(event) {
   console.log('got remote stream');
   var video_div = document.getElementById('remoteVideos');
   if(streamsGotten == 0) {
-    var str = '<video id="remoteVideo' + numVideos + '" autoplay style="width:40%;"></video>';
-    console.log(str);
-    video_div.innerHTML += str;
-    var new_video = document.getElementById('remoteVideo' + numVideos);
+    var new_video = document.createElement('video');
+    var new_video_id = "remoteVideo" + numVideos;
+    new_video.id = new_video_id;
+    new_video.autoplay = true;
+    new_video.style.width = "40%";
     new_video.srcObject = event.streams[0];  
+    video_div.append(new_video);
     streamsGotten++;
   } else {
     var str = 'remoteVideo' + numVideos;
