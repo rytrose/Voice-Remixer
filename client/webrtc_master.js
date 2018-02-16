@@ -16,6 +16,7 @@ var peerConnectionConfig = {
 };
 
 function pageReady() {
+
   uuid = createUUID();
   document.getElementById('masterId').innerHTML = uuid;
 
@@ -70,6 +71,10 @@ function getUserMediaSuccess(stream) {
   localStream.addTrack(streamFromMixer.getAudioTracks()[0]);
 
   localVideo.srcObject = localStream;
+
+  var toneStream = new Tone.UserMedia();
+  toneStream.openMediaStream(streamFromMixer);
+  toneStream.toMaster();
 }
 
 function start(signal) {
