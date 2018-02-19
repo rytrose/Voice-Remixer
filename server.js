@@ -39,15 +39,15 @@ process.on('SIGINT', function() {
 app.use(express.static( __dirname + '/client'));
 
 app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client/views', 'index.html'));
 });
 
 app.get('/master', function (req, res) {
-  res.sendFile(path.join(__dirname, 'client', 'master.html'));
+  res.sendFile(path.join(__dirname, 'client/views', 'master.html'));
 });
 
 app.get('/slave', function (req, res) {
-  res.sendFile(path.join(__dirname, 'client', 'slave.html'));
+  res.sendFile(path.join(__dirname, 'client/views', 'slave.html'));
 });
 
 // ----------------------------------------------------------------------------------------

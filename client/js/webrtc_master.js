@@ -15,7 +15,7 @@ var peerConnectionConfig = {
   ]
 };
 
-function pageReady() {
+window.onload = function() {
 
   uuid = createUUID();
   document.getElementById('masterId').innerHTML = uuid;
@@ -53,7 +53,7 @@ function pageReady() {
   } else {
     alert('Your browser does not support getUserMedia API');
   }
-}
+};
 
 function getUserMediaSuccess(stream) {
   localStream = stream;
@@ -70,8 +70,11 @@ function getUserMediaSuccess(stream) {
   // Add the mixer audio track to local stream
   localStream.addTrack(streamFromMixer.getAudioTracks()[0]);
 
-  localVideo.srcObject = localStream;
+  // Add VowelWorm
+  var worm = new window.VowelWorm.instance(localStream);
+  window.vw.addWorm(worm, localStream);
 
+  // Add to Tonejs
   var toneStream = new Tone.UserMedia();
   toneStream.openMediaStream(streamFromMixer);
   toneStream.toMaster();
@@ -130,21 +133,16 @@ function gotRemoteStream(event) {
   // First track event
   if(!remoteStream) {
     remoteStream = new MediaStream([event.track]);
-    if(event.track.kind == "audio") mixer.addStream(event.streams[0]);
+    if(event.track.kind == "audio") {
+      mixer.addStream(event.streams[0]);  
+    } 
   }
   // Second track event
   else {
     remoteStream.addTrack(event.track);
     if(event.track.kind == "audio") mixer.addStream(event.streams[0]); 
-    var video_div = document.getElementById('remoteVideos');
-    var new_video = document.createElement('video');
-    var new_video_id = "remoteVideo" + numPeers;
-    new_video.id = new_video_id;
-    new_video.autoplay = true;
-    new_video.style.width = "40%";
-    new_video.srcObject = remoteStream;
-    remoteStream = null;  
-    video_div.append(new_video);
+    var worm = new window.VowelWorm.instance(remoteStream);
+    window.vw.addWorm(worm, remoteStream);  
     numPeers++;
   }
 }
