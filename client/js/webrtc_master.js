@@ -1,5 +1,6 @@
 var localVideo;
 var localStream;
+var mixedStream;
 var remoteVideo;
 var peerConnections = {};
 var uuid;
@@ -7,6 +8,7 @@ var serverConnection;
 var numPeers = 0;
 var streamsGotten = 0;
 var mixer = new Mixer();
+var recording = false;
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -53,24 +55,46 @@ window.onload = function() {
   } else {
     alert('Your browser does not support getUserMedia API');
   }
+
+  /*
+   *  recording
+   */
+   var recordButton = document.getElementById('record');
+
+   recordButton.onclick = function(e) {
+
+    // Start recording
+    if(!recording) {
+
+
+      recording = true;
+    }
+
+    // Stop recording
+    else {
+
+    }
+
+   }
 };
 
 function getUserMediaSuccess(stream) {
-  localStream = stream;
+  localStream = stream.clone();
+  mixedStream = stream;
   
-  // Add local stream to mixer
-  mixer.addStream(localStream);
+  // Add stream to mixer
+  mixer.addStream(mixedStream);
 
   // Get the mixed audio stream from mixer
   var streamFromMixer = mixer.getOutputStream();
 
   // Remove the original audio track from local stream
-  localStream.removeTrack(localStream.getAudioTracks()[0]);
+  mixedStream.removeTrack(mixedStream.getAudioTracks()[0]);
 
-  // Add the mixer audio track to local stream
-  localStream.addTrack(streamFromMixer.getAudioTracks()[0]);
+  // Add the mixer audio track to mixed stream
+  mixedStream.addTrack(streamFromMixer.getAudioTracks()[0]);
 
-  // Add VowelWorm
+  // Add localStream to VowelWorm
   var worm = new window.VowelWorm.instance(localStream);
   window.vw.addWorm(worm, localStream);
 
@@ -84,7 +108,7 @@ function start(signal) {
   var peerConnection = new RTCPeerConnection(peerConnectionConfig);
   peerConnection.onicecandidate = gotIceCandidate;
   peerConnection.ontrack = gotRemoteStream;
-  peerConnection.addStream(localStream);
+  peerConnection.addStream(mixedStream);
   peerConnections[signal.uuid] = peerConnection;
 }
 

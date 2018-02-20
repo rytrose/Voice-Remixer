@@ -111,7 +111,10 @@ window.VowelWorm.Game = function( p5 ) {
         container.circles = [];
         container.stream = stream;
 
-        var cap = game.p5.createCaptureFromStream(stream);
+        // Remove audio for animation
+        var audiolessStream = stream.clone();
+        audiolessStream.removeTrack(audiolessStream.getAudioTracks()[0]);
+        var cap = game.p5.createCaptureFromStream(audiolessStream);
         cap.hide();
         game.p5.imageMode(game.p5.CENTER);
         container.video = cap;
