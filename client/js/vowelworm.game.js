@@ -76,7 +76,7 @@ window.VowelWorm.Game = function( p5 ) {
      * @type Array.<Object>
      * @private
      */
-    var worms = [];
+    game.worms = [];
 
     var stopped = false;
 
@@ -111,14 +111,29 @@ window.VowelWorm.Game = function( p5 ) {
         container.circles = [];
         container.stream = stream;
 
-        // Remove audio for animation
-        var audiolessStream = stream.clone();
-        audiolessStream.removeTrack(audiolessStream.getAudioTracks()[0]);
-        var cap = game.p5.createCaptureFromStream(audiolessStream);
-        cap.hide();
         game.p5.imageMode(game.p5.CENTER);
-        container.video = cap;
-        worms.push(container);
+        
+        // If stream is a MediaStream
+        if(typeof stream === 'object' && stream['constructor']['name'] === 'MediaStream') {
+            // Remove audio for animation
+            var audiolessStream = stream.clone();
+            audiolessStream.removeTrack(audiolessStream.getAudioTracks()[0]);
+            var cap = game.p5.createCaptureFromStream(audiolessStream);
+            cap.hide();
+            container.video = cap;
+            container.recording = false;
+            game.worms.push(container);
+        } 
+        // If stream is a video URL
+        else {
+            var video = game.p5.createVideo(stream);
+            video.volume(0.0);
+            video.loop();
+            video.hide();
+            container.video = video;
+            container.recording = true;
+            game.worms.push(container);
+        }
     };
 
     /**
@@ -126,7 +141,7 @@ window.VowelWorm.Game = function( p5 ) {
      */
     game.drawWorm = function( p5 ){
         var current_color = "#00FF00";
-        worms.forEach(function(container) {
+        game.worms.forEach(function(container) {
             var worm = container.worm,
                 circles = container.circles;
 
@@ -149,7 +164,7 @@ window.VowelWorm.Game = function( p5 ) {
         });
         
 
-        worms.forEach(function(container) {
+        game.worms.forEach(function(container) {
             var circles = container.circles;
             
             // Calaculate fading alphas and maintain numTrail circles

@@ -771,7 +771,7 @@
         this.mode = this.AUDIO;
         this._sourceNode = this._context.createMediaElementSource(audio);
         this._sourceNode.connect(this._analyzer);
-        this._analyzer.connect(this._context.destination);
+        // this._analyzer.connect(this._context.destination);
         this._sourceNode.connect(this._processorNode);
     };
 
@@ -786,7 +786,7 @@
         this.mode = this.VIDEO;
         this._sourceNode = this._context.createMediaElementSource(video);
         this._sourceNode.connect(this._analyzer);
-        this._analyzer.connect(this._context.destination);
+        // this._analyzer.connect(this._context.destination);
         this._sourceNode.connect(this._processorNode);
     };
 }(window.numeric));

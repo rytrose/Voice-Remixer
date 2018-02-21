@@ -1,5 +1,6 @@
 var localVideo;
 var localStream;
+var recorder;
 var mixedStream;
 var remoteVideo;
 var peerConnections = {};
@@ -9,6 +10,8 @@ var numPeers = 0;
 var streamsGotten = 0;
 var mixer = new Mixer();
 var recording = false;
+var recordingChunks = []
+window.currentRecordings = [];
 
 var peerConnectionConfig = {
   'iceServers': [
@@ -59,27 +62,58 @@ window.onload = function() {
   /*
    *  recording
    */
-   var recordButton = document.getElementById('record');
+  var recordButton = document.getElementById('record');
 
-   recordButton.onclick = function(e) {
+  recordButton.onclick = function(e) {
 
     // Start recording
     if(!recording) {
 
-
+      recorder.start();
+      recordButton.innerHTML = "Stop Recording";
       recording = true;
     }
 
     // Stop recording
     else {
-
+      recorder.stop();
+      recordButton.innerHTML = "Record";
+      recording = false;
     }
 
-   }
+  }
 };
 
 function getUserMediaSuccess(stream) {
   localStream = stream.clone();
+
+  // Create new recorder from local stream 
+  recorder = new MediaRecorder(localStream);
+  recorder.ondataavailable = function(e) {
+    recordingChunks.push(e.data);
+  }
+
+  recorder.onstop = function() {
+    var newRecordingWorm = document.createElement('video');
+    var newRecordingMixer = document.createElement('video');
+    var blob = new Blob(recordingChunks, { 'type' : 'video/mp4' });
+    recordingChunks = [];
+    var videoURL = URL.createObjectURL(blob);
+    newRecordingWorm.src = videoURL;
+    newRecordingMixer.src = videoURL;
+    newRecordingWorm.loop = true;
+    newRecordingMixer.loop = true;
+    newRecordingWorm.play();
+    newRecordingMixer.play();
+
+    // Create a new worm from the audio
+    var worm = new window.VowelWorm.instance(newRecordingWorm);
+    window.vw.addWorm(worm, videoURL);
+
+    // Add recording to mixer
+    mixer.addRecording(newRecordingMixer);
+  }
+
   mixedStream = stream;
   
   // Add stream to mixer
