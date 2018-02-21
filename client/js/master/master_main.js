@@ -11,6 +11,8 @@ window.onload = function () {
     loadP5();
 };
 
+function printCoords() { console.log(document.getElementById('coords').innerHTML) };
+
 function loadRecording() {
     /*
      *  recording

@@ -9,6 +9,8 @@
  * @constructor
  * @name VowelWorm.Game
  */
+window.maxHeight = 0;
+window.maxBackness = 0;
 window.VowelWorm.Game = function (p5) {
     "use strict";
 
@@ -224,15 +226,74 @@ window.VowelWorm.Game = function (p5) {
      */
     var transformToXAndY = function (backness, height) {
         var xStart = game.x1;
-        var xEnd = game.x2;
+        var xEnd = game.x2; // 4
         var yStart = game.y1;
-        var yEnd = game.y2;
+        var yEnd = game.y2; // 3
 
-        var xDist = game.p5.width / (xEnd - xStart);
-        var yDist = game.p5.height / (yEnd - yStart);
+        var source_x1 = 0.5875761829812367;
+        var source_y1 = 1.7181430675490055;
+        var source_x2 = 1.3712284246953363;
+        var source_y2 = 1.4761145185273776;
+        var source_x3 = 1.460511922941194;
+        var source_y3 = 0.7256976796329868;
+        var source_x4 = 1.4921904824786225;
+        var source_y4 = 1.455751085066168;
 
-        var adjustedX = (backness - xStart) * xDist + game.margin;
-        var adjustedY = game.p5.height - (height - yStart) * yDist + game.margin;
+        var dest_x1 = 0;
+        var dest_y1 = 1;
+        var dest_x2 = 1;
+        var dest_y2 = 1;
+        var dest_x3 = 0;
+        var dest_y3 = 0;
+        var dest_x4 = 1;
+        var dest_y4 = 0;
+
+        // https://math.stackexchange.com/questions/296794/finding-the-transform-matrix-from-4-projected-points-with-javascript
+        var source_a = math.matrix([[source_x1, source_x2, source_x3],
+                            [source_y1, source_y2, source_y3],
+                            [1, 1, 1]]);
+        var source_b = math.matrix([[source_x4], [source_y4], [1]]);
+        var source_aPrime = math.inv(source_a);
+        var source_coeffs = math.multiply(source_aPrime, source_b);
+        var source_coeffIdentity = math.matrix([[source_coeffs.subset(math.index(0, 0)), 0, 0],
+                                                [0, source_coeffs.subset(math.index(1, 0)), 0],
+                                                [0, 0, source_coeffs.subset(math.index(2, 0))]]);
+        var source_a = math.multiply(source_a, source_coeffIdentity);
+
+        var dest_a = math.matrix([[dest_x1, dest_x2, dest_x3],
+            [dest_y1, dest_y2, dest_y3],
+            [1, 1, 1]]);
+        var dest_b = math.matrix([[dest_x4], [dest_y4], [1]]);
+        var dest_aPrime = math.inv(dest_a);
+        var dest_coeffs = math.multiply(dest_aPrime, dest_b);
+        var dest_coeffIdentity = math.matrix([[dest_coeffs.subset(math.index(0, 0)), 0, 0],
+                                              [0, dest_coeffs.subset(math.index(1, 0)), 0],
+                                              [0, 0, dest_coeffs.subset(math.index(2, 0))]]);
+        var dest_a = math.multiply(dest_a, dest_coeffIdentity);
+
+        var c = math.multiply(dest_a, math.inv(source_a));
+
+        var orig = math.matrix([[backness], [height], [1]]);
+        var transformed = math.multiply(c, orig);
+        var x_prime = transformed.subset(math.index(0, 0));
+        var y_prime = transformed.subset(math.index(1, 0));
+        var z_prime = transformed.subset(math.index(2, 0));
+
+        var newCoords = {x: x_prime / z_prime, y: y_prime / z_prime};
+        console.log(newCoords);
+
+        // var xDist = game.p5.width; / (xEnd - xStart);
+        // var yDist = game.p5.height / (yEnd - yStart);
+        //
+        // var adjustedX = (backness - xStart) * xDist + game.margin;
+        // var adjustedY = game.p5.height - (height - yStart) * yDist + game.margin;
+        if(backness > maxBackness) window.maxBackness = backness;
+        if(height > maxHeight) window.maxHeight = height;
+        var adjustedX = backness * game.p5.width;
+        var adjustedY = height * game.p5.height;
+
+        var coords = document.getElementById('coords');
+        coords.innerHTML = "(" + backness + ", " + height + ")";
 
         return {x: adjustedX, y: adjustedY};
     };
