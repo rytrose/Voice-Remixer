@@ -230,14 +230,14 @@ window.VowelWorm.Game = function (p5) {
         var yStart = game.y1;
         var yEnd = game.y2; // 3
 
-        var source_x1 = 0.5875761829812367;
-        var source_y1 = 1.7181430675490055;
-        var source_x2 = 1.3712284246953363;
-        var source_y2 = 1.4761145185273776;
-        var source_x3 = 1.460511922941194;
-        var source_y3 = 0.7256976796329868;
-        var source_x4 = 1.4921904824786225;
-        var source_y4 = 1.455751085066168;
+        var source_x1 = 0.51;
+        var source_y1 = 1.8;
+        var source_x2 = 1.3;
+        var source_y2 = 1.6;
+        var source_x3 = 1.4 //1.3;
+        var source_y3 = 0.8;
+        var source_x4 = 1.45;
+        var source_y4 = 1.0;
 
         var dest_x1 = 0;
         var dest_y1 = 1;
@@ -279,23 +279,25 @@ window.VowelWorm.Game = function (p5) {
         var y_prime = transformed.subset(math.index(1, 0));
         var z_prime = transformed.subset(math.index(2, 0));
 
-        var newCoords = {x: x_prime / z_prime, y: y_prime / z_prime};
-        console.log(newCoords);
-
-        // var xDist = game.p5.width; / (xEnd - xStart);
-        // var yDist = game.p5.height / (yEnd - yStart);
+        var newCoords = {x: (x_prime / z_prime) * game.p5.width, y: game.p5.height - (y_prime / z_prime) * game.p5.height};
+        return newCoords;
+        
+        // console.log(newCoords);
         //
-        // var adjustedX = (backness - xStart) * xDist + game.margin;
-        // var adjustedY = game.p5.height - (height - yStart) * yDist + game.margin;
-        if(backness > maxBackness) window.maxBackness = backness;
-        if(height > maxHeight) window.maxHeight = height;
-        var adjustedX = backness * game.p5.width;
-        var adjustedY = height * game.p5.height;
-
-        var coords = document.getElementById('coords');
-        coords.innerHTML = "(" + backness + ", " + height + ")";
-
-        return {x: adjustedX, y: adjustedY};
+        // // var xDist = game.p5.width; / (xEnd - xStart);
+        // // var yDist = game.p5.height / (yEnd - yStart);
+        // //
+        // // var adjustedX = (backness - xStart) * xDist + game.margin;
+        // // var adjustedY = game.p5.height - (height - yStart) * yDist + game.margin;
+        // if(backness > maxBackness) window.maxBackness = backness;
+        // if(height > maxHeight) window.maxHeight = height;
+        // var adjustedX = backness * game.p5.width;
+        // var adjustedY = height * game.p5.height;
+        //
+        // var coords = document.getElementById('coords');
+        // coords.innerHTML = "(" + backness + ", " + height + ")";
+        //
+        // return {x: adjustedX, y: adjustedY};
     };
 
     /**
