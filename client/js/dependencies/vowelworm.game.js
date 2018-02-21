@@ -9,7 +9,7 @@
  * @constructor
  * @name VowelWorm.Game
  */
-window.VowelWorm.Game = function( p5 ) {
+window.VowelWorm.Game = function (p5) {
     "use strict";
 
     var game = this;
@@ -95,8 +95,8 @@ window.VowelWorm.Game = function( p5 ) {
      * @memberof VowelWorm.Game
      * @name play
      */
-    game.draw = function(){
-      game.drawWorm(game.p5);
+    game.draw = function () {
+        game.drawWorm(game.p5);
     };
 
     /**
@@ -105,16 +105,16 @@ window.VowelWorm.Game = function( p5 ) {
      * @memberof VowelWorm.Game
      * @name addWorm
      */
-    game.addWorm = function(worm, stream) {
+    game.addWorm = function (worm, stream) {
         var container = {};
         container.worm = worm;
         container.circles = [];
         container.stream = stream;
 
         game.p5.imageMode(game.p5.CENTER);
-        
+
         // If stream is a MediaStream
-        if(typeof stream === 'object' && stream['constructor']['name'] === 'MediaStream') {
+        if (typeof stream === 'object' && stream['constructor']['name'] === 'MediaStream') {
             // Remove audio for animation
             var audiolessStream = stream.clone();
             audiolessStream.removeTrack(audiolessStream.getAudioTracks()[0]);
@@ -123,7 +123,7 @@ window.VowelWorm.Game = function( p5 ) {
             container.video = cap;
             container.recording = false;
             game.worms.push(container);
-        } 
+        }
         // If stream is a video URL
         else {
             var video = game.p5.createVideo(stream);
@@ -139,15 +139,15 @@ window.VowelWorm.Game = function( p5 ) {
     /**
      * @private
      */
-    game.drawWorm = function( p5 ){
+    game.drawWorm = function (p5) {
         var current_color = "#00FF00";
-        game.worms.forEach(function(container) {
+        game.worms.forEach(function (container) {
             var worm = container.worm,
                 circles = container.circles;
 
             var coords = getCoords(container);
 
-            if(coords!==null){
+            if (coords !== null) {
                 var doRender = true;
 
                 var x = coords.x;
@@ -162,24 +162,24 @@ window.VowelWorm.Game = function( p5 ) {
             }
             current_color = getNextColor(current_color);
         });
-        
 
-        game.worms.forEach(function(container) {
+
+        game.worms.forEach(function (container) {
             var circles = container.circles;
-            
+
             // Calaculate fading alphas and maintain numTrail circles
-            for(var i=0; i<circles.length; i++){
+            for (var i = 0; i < circles.length; i++) {
                 var obj = circles[i];
                 obj.alpha = 255 - p5.ceil(i * (255 / (game.numTrail - 1)));
 
-                if(i >= game.numTrail){
+                if (i >= game.numTrail) {
                     circles.splice(i, 1);
                     i--;
                 }
             }
 
             // Draw circles
-            for(var i=0; i<circles.length; i++){
+            for (var i = 0; i < circles.length; i++) {
                 var circle = circles[i];
                 p5.stroke(255);
                 var color = p5.color(circle.tint);
@@ -190,16 +190,16 @@ window.VowelWorm.Game = function( p5 ) {
 
             // Draw video
             container.video.mask(maskImage);
-            if(circles.length > 0) p5.image(container.video, circles[0].position.x, circles[0].position.y, 200, 200);
+            if (circles.length > 0) p5.image(container.video, circles[0].position.x, circles[0].position.y, 200, 200);
         });
 
     };
 
-    var getCoords = function(container){
-  
+    var getCoords = function (container) {
+
         var buffer = container.worm.getFFT();
 
-        if(isSilent(buffer)) {
+        if (isSilent(buffer)) {
             container.circles.pop();
             container.worm.resetPosition();
             return null;
@@ -209,9 +209,9 @@ window.VowelWorm.Game = function( p5 ) {
         var position = container.worm.getPosition();
 
         // Transform (backness, height) to (x, y) canvas coordinates
-        if(position.length) {
-          var coords = transformToXAndY(position[0],position[1]);
-          return coords;
+        if (position.length) {
+            var coords = transformToXAndY(position[0], position[1]);
+            return coords;
         }
         return null;
     };
@@ -222,19 +222,19 @@ window.VowelWorm.Game = function( p5 ) {
      * @param {number} height
      * @name transformToXAndY
      */
-    var transformToXAndY = function(backness, height){
+    var transformToXAndY = function (backness, height) {
         var xStart = game.x1;
         var xEnd = game.x2;
         var yStart = game.y1;
         var yEnd = game.y2;
 
-        var xDist = game.p5.width/(xEnd-xStart);
-        var yDist = game.p5.height/(yEnd-yStart);
+        var xDist = game.p5.width / (xEnd - xStart);
+        var yDist = game.p5.height / (yEnd - yStart);
 
-        var adjustedX = (backness-xStart)*xDist + game.margin;
-        var adjustedY = game.p5.height-(height-yStart)*yDist + game.margin;
+        var adjustedX = (backness - xStart) * xDist + game.margin;
+        var adjustedY = game.p5.height - (height - yStart) * yDist + game.margin;
 
-        return {x:adjustedX,y:adjustedY};
+        return {x: adjustedX, y: adjustedY};
     };
 
     /**
@@ -243,29 +243,29 @@ window.VowelWorm.Game = function( p5 ) {
      * @param {Array.<number>|Float32Array} data - An array containing dB values
      * @return {boolean} Whether or not the data is essentially 'silent'
      */
-    var isSilent = function(data) {
-      for(var i = 0; i<data.length; i++) {
-        if(data[i] > game.silence) {
-            return false;
+    var isSilent = function (data) {
+        for (var i = 0; i < data.length; i++) {
+            if (data[i] > game.silence) {
+                return false;
+            }
         }
-      }
-      return true;
+        return true;
     };
 
     //Color Functions
     //Converts an integer representing a color to an integer representing a color 45 degrees away
-    var getNextColor = function(old_color){
-      if(typeof old_color == 'number'){
-        old_color = old_color.toString(16);
-        //Pad with 0's if necessary
-        while(old_color.length<6){
-          old_color = "0" + old_color;
+    var getNextColor = function (old_color) {
+        if (typeof old_color == 'number') {
+            old_color = old_color.toString(16);
+            //Pad with 0's if necessary
+            while (old_color.length < 6) {
+                old_color = "0" + old_color;
+            }
         }
-      }
 
-      old_color = new tinycolor(old_color);
-      var new_color = old_color.spin(45).toHexString();
-      return new_color;
+        old_color = new tinycolor(old_color);
+        var new_color = old_color.spin(45).toHexString();
+        return new_color;
     };
 
     // /**

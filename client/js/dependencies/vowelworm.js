@@ -1,4 +1,4 @@
-(function(numeric){
+(function (numeric) {
     "use strict";
 
     /**
@@ -43,7 +43,7 @@
      * 2014, 2:52 PM UTC) and Cory Robinson's chart (personal email)
      *
      * These indicate the minimum values in Hz in which we should find our formants
-     * 
+     *
      * TODO get better documentation (wikipedia's not the most reliable of sources, and I don't know if anyone who's still here has access to the email with Cory Robinson's chart.)
      */
 
@@ -80,20 +80,20 @@
     var LAST_MFCC = 25;
 
     /**
-<<<<<<< HEAD
+     <<<<<<< HEAD
      * The minimum backness value. Used for transforming between formants to backness.
-=======
+     =======
      * Represent the minimum differences between formants, to ensure they are
      * properly spaced
      *
-     * 
+     *
      * I'm not sure if this is possible. Sometimes the formants, especially the
      * second and third formants, merge together for a little bit. (TODO Find source.)
-     * 
+     *
      * If it's possible/reasonable, we might want to look at the beginning and end of
      * the vowelss to see if it's one or two formants.
      *
->>>>>>> ae5b061f1d0660bdb59dd980c7dd801ac5f31fb2
+     >>>>>>> ae5b061f1d0660bdb59dd980c7dd801ac5f31fb2
      * @const
      * @type number
      */
@@ -153,20 +153,20 @@
 
     /**
      * Loads the regression weights from the server
-     * @param boolean normalizeMFCCs indicates whether to use weights for normalized or 
+     * @param boolean normalizeMFCCs indicates whether to use weights for normalized or
      * non-normalized MFCCs
      */
-    VowelWorm.loadRegressionWeights = function(normalizeMFCCs) {
-        
+    VowelWorm.loadRegressionWeights = function (normalizeMFCCs) {
+
         var weightsReq = new XMLHttpRequest();
-        weightsReq.addEventListener("load", function() {
+        weightsReq.addEventListener("load", function () {
 
             // Parse the backness and height weights
             var xmlDoc = weightsReq.responseXML;
             var backWeightsElements = xmlDoc.getElementsByTagName("backness")[0]
-                    .getElementsByTagName("weight");
+                .getElementsByTagName("weight");
             var heightWeightsElements = xmlDoc.getElementsByTagName("height")[0]
-                    .getElementsByTagName("weight");
+                .getElementsByTagName("weight");
             var backWeights = [];
             var heightWeights = [];
             for (var i = 0; i < backWeightsElements.length; i++) {
@@ -177,14 +177,14 @@
             VowelWorm._MFCC_WEIGHTS[25].height = new Float32Array(heightWeights);
         })
         if (normalizeMFCCs) {
-            weightsReq.open("GET", "training/weights_norm_mfcc.xml", true);        
+            weightsReq.open("GET", "training/weights_norm_mfcc.xml", true);
         }
         else {
             weightsReq.open("GET", "training/weights.xml", true);
         }
         weightsReq.send();
     }
-    
+
 
     /**
      * Given an array of fft data, returns backness and height coordinates
@@ -194,7 +194,7 @@
      * @nosideeffects
      */
     VowelWorm._MAPPING_METHODS = {
-        linearRegression: function(fftData, options) {
+        linearRegression: function (fftData, options) {
 
             // Get the mfccs to use as features
             var mfccs = window.AudioProcessor.getMFCCs({
@@ -207,7 +207,7 @@
             });
 
             // Predict the backness and height using multiple linear regression
-            if(mfccs.length) {
+            if (mfccs.length) {
 
                 // Get the specified MFCCs to use as regressors (features)
                 // Also makes a copy of mfccs (since they are changing with the streaming audio)
@@ -221,7 +221,7 @@
                     }
                     for (var i = 0; i < features.length; i++) {
                         features[i] /= Math.sqrt(normSquared);
-                    }                    
+                    }
                 }
 
                 // Insert DC coefficient for regression
@@ -240,10 +240,10 @@
                 var height = window.MathUtils.predict(features, VowelWorm._MFCC_WEIGHTS[features.length].height);
 
                 return [backness, height];
-            } 
+            }
             return [];
         },
-        mfccFormants: function(fftData, options) {
+        mfccFormants: function (fftData, options) {
 
             var mfccs = window.AudioProcessor.getMFCCs({
                 fft: fftData,
@@ -254,7 +254,7 @@
                 sampleRate: options.sampleRate
             });
 
-            if(mfccs.length) {
+            if (mfccs.length) {
 
                 // Convert the mfccs to formants
                 var formants = window.AudioProcessor.getFormantsFromMfccs(mfccs);
@@ -265,13 +265,13 @@
                 }
 
                 return [backness, height];
-            } 
+            }
             return [];
         },
-        cepstrumFormants: function(fftData, options) {
+        cepstrumFormants: function (fftData, options) {
             var cepstrum = window.AudioProcessor.getCepstrum(fftData, {});
 
-            if(cepstrum.length) {
+            if (cepstrum.length) {
 
                 // Convert the cepstrum to formants
                 var formants = window.AudioProcessor.getFormantsFromCepstrum(cepstrum, {
@@ -296,16 +296,16 @@
     /**
      * Maps first and second formants to the IPA vowel space.
      */
-    var mapFormantsToIPA = function(f1, f2) {
+    var mapFormantsToIPA = function (f1, f2) {
 
         // var backness = window.MathUtils.mapToScale(f2 - f1, 
         //     window.AudioProcessor.F2_MAX - window.AudioProcessor.F1_MAX, 
         //     window.AudioProcessor.F2_MIN - window.AudioProcessor.F1_MIN, BACKNESS_MIN, BACKNESS_MAX);
 
-        var backness = window.MathUtils.mapToScale(f2, 
+        var backness = window.MathUtils.mapToScale(f2,
             window.AudioProcessor.F2_MAX, window.AudioProcessor.F2_MIN, BACKNESS_MIN, BACKNESS_MAX);
 
-        var height = window.MathUtils.mapToScale(f1, 
+        var height = window.MathUtils.mapToScale(f1,
             window.AudioProcessor.F1_MAX, window.AudioProcessor.F1_MIN, HEIGHT_MIN, HEIGHT_MAX);
 
         return [backness, height];
@@ -366,7 +366,7 @@
         // Note: this is deprecated but the replacement has not been implemented in any browers yet.
         // See https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode/onaudioprocess
         this._processorNode = this._context.createScriptProcessor(this._analyzer.fftSize, 1, 1);
-        this._processorNode.onaudioprocess = function(e) {
+        this._processorNode.onaudioprocess = function (e) {
             that.computePosition(window.game.map, window.game.smoothingConstant);
 
             if (window.game.saveData) {
@@ -381,7 +381,7 @@
                 for (var i = 0; i < timeDomainBuffer.length; i++) {
                     timeDomainData[i] = timeDomainBuffer[i];
                 }
-                this.timeDomainData.push(timeDomainData[i]);  
+                this.timeDomainData.push(timeDomainData[i]);
 
                 // Save the FFT data
                 var fftBuffer = this.getFFT();
@@ -393,7 +393,7 @@
             }
         }
         this._processorNode.connect(this._context.destination);
-        
+
         if (stream) {
             this.setStream(stream);
         }
@@ -607,15 +607,15 @@
         // Copy the fft data since it will change as audio streams in
         var fft = [];
         for (var i = 0; i < buffer.length; i++) {
-          fft.push(buffer[i]);
+            fft.push(buffer[i]);
         }
 
         // Map the fft data to (backness, height) coordinates in the vowel space
         var position = mappingMethod(fft, {
-          fftSize: this.getFFTSize(),
-          minHz: window.game.minHz,
-          maxHz: window.game.maxHz,
-          sampleRate: this.getSampleRate()
+            fftSize: this.getFFTSize(),
+            minHz: window.game.minHz,
+            maxHz: window.game.maxHz,
+            sampleRate: this.getSampleRate()
         });
 
         // Smooth the position over time
@@ -626,8 +626,8 @@
             // Compute each coordinate separately
             for (var i = 0; i < this.positionSMA.length; i++) {
                 // Until we have enough previous data, this is the same as the cumulative moving average
-                this.positionSMA[i] = (position[i] + this.positions.length * this.positionSMA[i]) / 
-                        (this.positions.length + 1)
+                this.positionSMA[i] = (position[i] + this.positions.length * this.positionSMA[i]) /
+                    (this.positions.length + 1)
             }
         }
         else {
@@ -648,7 +648,7 @@
         return this.positionSMA;
     }
 
-    VowelWorm.instance.prototype.resetPosition = function() {
+    VowelWorm.instance.prototype.resetPosition = function () {
         this.positions = [];
         this.positionSMA = [];
     }
