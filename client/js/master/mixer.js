@@ -13,17 +13,21 @@ var currentConnections = 0;
 var mixer = new Mixer();
 
 function loadMixer() {
-    var mute = document.getElementById('mute');
-    mute.onchange = function () {
-        if (mute.checked) {
-            mixer.gains.forEach((gainNode) => {
-                gainNode.gain.setValueAtTime(0, mixer.context.currentTime);
+    var muteAll = document.getElementById('muteAll');
+    muteAll.onchange = function () {
+        var sourceControl = document.getElementById('sourceControl');
+        if (muteAll.checked) {
+            Array.from(sourceControl.children).forEach((control) => {
+                var mute = Array.from(control.children).find((el) => { return el.id.substring(0,4) == "mute"; });
+                if(!mute.checked) mute.click();
+                mute.disabled = true;
             });
         }
-
         else {
-            mixer.gains.forEach((gainNode) => {
-                gainNode.gain.setValueAtTime(1, mixer.context.currentTime);
+            Array.from(sourceControl.children).forEach((control) => {
+                var mute = Array.from(control.children).find((el) => { return el.id.substring(0,4) == "mute"; });
+                if(mute.checked) mute.click();
+                mute.disabled = false;
             });
         }
     };
@@ -43,40 +47,84 @@ function Mixer() {
     this.output = this.context.createMediaStreamDestination();
 }
 
-Mixer.prototype.addStream = function (stream) {
-    // Create a MediaStreamAudioSourceNode from the stream
-    var source = this.context.createMediaStreamSource(stream);
-    console.log('Created Web Audio source from remote stream: ', source);
-    console.log('Number of channels from this AudioNode: ', source.channelCount);
-    console.log('Connecting source to output.');
+Mixer.prototype.addSource = function (input) {
+    // If source is a stream
+    if(typeof input === 'object' && input['constructor']['name'] === 'MediaStream') {
+        // Create a MediaStreamAudioSourceNode from the stream
+        var source = this.context.createMediaStreamSource(input);
+        console.log('Created Web Audio source from remote stream: ', source);
+        console.log('Number of channels from this AudioNode: ', source.channelCount);
+        console.log('Connecting source to output.');
+    }
+    // Else source is a recording
+    else {
+        // Create a MediaElementAudioSourceNode from the recording
+        var source = this.context.createMediaElementSource(input);
+        console.log('Created Web Audio source from recording: ', source);
+        console.log('Number of channels from this AudioNode: ', source.channelCount);
+        console.log('Connecting source to output.');
+    }
 
     // Add effects chain for each stream, just gains for now
     this.gains[currentConnections] = this.context.createGain();
-    var mute = document.getElementById('mute');
-    if (mute.checked) this.gains[currentConnections].gain.setValueAtTime(0, mixer.context.currentTime);
-    else this.gains[currentConnections].gain.setValueAtTime(1, mixer.context.currentTime);
+    this.gains[currentConnections].gain.setValueAtTime(1.0, this.context.currentTime);
 
+    // Add chain to output stream
     source.connect(this.gains[currentConnections]);
     this.gains[currentConnections].connect(this.output);
+
+    // Add controls
+    var sourceControl = document.getElementById('sourceControl');
+    var newControls = document.createElement('div');
+    newControls.id = 'control' + currentConnections;
+    sourceControl.appendChild(newControls);
+
+    var muteLabel = document.createElement('label');
+    muteLabel.for = 'mute' + currentConnections;
+    muteLabel.innerHTML = "Mute " + currentConnections + ": ";
+    newControls.appendChild(muteLabel);
+
+    var muteCheckbox = document.createElement('input');
+    muteCheckbox.id = 'mute' + currentConnections;
+    muteCheckbox.type = "checkbox";
+    muteCheckbox.onchange = muteHandler;
+    newControls.appendChild(muteCheckbox);
+
+    var gainSlider = document.createElement('input');
+    gainSlider.type = "range";
+    gainSlider.id = 'gain' + currentConnections;
+    gainSlider.max = 1.0;
+    gainSlider.min = 0.0;
+    gainSlider.step = 0.01;
+    gainSlider.value = 1.0;
+    gainSlider.oninput = gainHandler;
+    newControls.appendChild(gainSlider);
+
+    var muteAll = document.getElementById('muteAll');
+    if(muteAll.checked) muteCheckbox.click();
+
+    // Update number of connections
     currentConnections++;
 }
 
-Mixer.prototype.addRecording = function (recording) {
-    // Create a MediaStreamAudioSourceNode from the recording
-    var source = this.context.createMediaElementSource(recording);
-    console.log('Created Web Audio source from recording: ', source);
-    console.log('Number of channels from this AudioNode: ', source.channelCount);
-    console.log('Connecting source to output.');
+var muteHandler = function (e) {
+    var mute = e.target;
+    var gainInd = parseInt(mute.id.charAt(4));
+    var gainSlider = document.getElementById('gain' + gainInd);
+    if (mute.checked) {
+        gainSlider.disabled = true;
+        mixer.gains[gainInd].gain.setValueAtTime(0, mixer.context.currentTime);
+    }
+    else {
+        gainSlider.disabled = false;
+        mixer.gains[gainInd].gain.setValueAtTime(parseFloat(gainSlider.value), mixer.context.currentTime);
+    }
+}
 
-    // Add effects chain for each recording, just gains for now
-    this.gains[currentConnections] = this.context.createGain();
-    var mute = document.getElementById('mute');
-    if (mute.checked) this.gains[currentConnections].gain.setValueAtTime(0, mixer.context.currentTime);
-    else this.gains[currentConnections].gain.setValueAtTime(1, mixer.context.currentTime);
-
-    source.connect(this.gains[currentConnections]);
-    this.gains[currentConnections].connect(this.output);
-    currentConnections++;
+var gainHandler = function (e) {
+    var gain = e.target;
+    var gainInd = parseInt(gain.id.charAt(4));
+    mixer.gains[gainInd].gain.setValueAtTime(parseFloat(gain.value), mixer.context.currentTime);
 }
 
 Mixer.prototype.getOutputStream = function () {

@@ -44,6 +44,7 @@ function getUserMediaSuccess(stream) {
         recordingChunks.push(e.data);
     }
 
+    // Set recorder callback
     recorder.onstop = function () {
         var newRecordingWorm = document.createElement('video');
         var newRecordingMixer = document.createElement('video');
@@ -56,19 +57,21 @@ function getUserMediaSuccess(stream) {
         newRecordingMixer.loop = true;
         newRecordingWorm.play();
         newRecordingMixer.play();
+        // Needs two separate recordings for two separate Web Audio graphs
+        // 1. the Vowel Worm, 2. the Mixer
 
         // Create a new worm from the audio
         var worm = new window.VowelWorm.instance(newRecordingWorm);
         window.vw.addWorm(worm, videoURL);
 
         // Add recording to mixer
-        mixer.addRecording(newRecordingMixer);
+        mixer.addSource(newRecordingMixer);
     }
 
     mixedStream = stream;
 
     // Add stream to mixer
-    mixer.addStream(mixedStream);
+    mixer.addSource(mixedStream);
 
     // Get the mixed audio stream from mixer
     var streamFromMixer = mixer.getOutputStream();
@@ -148,13 +151,13 @@ function gotRemoteStream(event) {
     if (!remoteStream) {
         remoteStream = new MediaStream([event.track]);
         if (event.track.kind == "audio") {
-            mixer.addStream(event.streams[0]);
+            mixer.addSource(event.streams[0]);
         }
     }
     // Second track event
     else {
         remoteStream.addTrack(event.track);
-        if (event.track.kind == "audio") mixer.addStream(event.streams[0]);
+        if (event.track.kind == "audio") mixer.addSource(event.streams[0]);
         var worm = new window.VowelWorm.instance(remoteStream);
         window.vw.addWorm(worm, remoteStream);
         remoteStream = null;

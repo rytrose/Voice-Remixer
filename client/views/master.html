@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script src="../js/dependencies/p5.js"></script>
     <script src="../js/dependencies/p5.dom.js"></script>
@@ -9,18 +9,22 @@
     <script src="../js/dependencies/tinycolor.js"></script>
     <script src="../js/dependencies/mathutils.js"></script>
     <script src="../js/dependencies/audioprocessor.js"></script>
-    
+
     <script src="../js/dependencies/vowelworm.js"></script>
     <script src="../js/dependencies/vowelworm.game.js"></script>
     <script src="../js/master/master_main.js"></script>
     <script src="../js/master/webrtc_master.js"></script>
-  </head>
+</head>
 
-  <body>
+<body>
     <p id="masterId"></p>
-    <p>Mute?: <input id="mute" type="checkbox"></p>
+    <div id="sourceControl"></div>
+    <label for="muteAll">Mute all: </label>
+    <input id="muteAll" type="checkbox">
+
     <button id="record">Record</button>
     <div id="sketch"></div>
-    <br />
-  </body>
+
+    <br/>
+</body>
 </html>

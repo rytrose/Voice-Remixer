@@ -21,7 +21,6 @@ function loadRecording() {
 
         // Start recording
         if (!recording) {
-
             recorder.start();
             recordButton.innerHTML = "Stop Recording";
             recording = true;
